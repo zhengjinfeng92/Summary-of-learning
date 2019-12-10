@@ -1,0 +1,85 @@
+## JVM自动内存管理
+
+### 一：运行时数据区域
+
+![内存划分](picture/内存划分.jpg)
+
+#### 1：程序计数器
+
+- 存储当前线程执行的字节码的地址/位置
+- 每个线程都有自己独立的程序计数器，是线程非共享区
+- java 多线程是通过线程轮转并分配一定处理器的执行时间来实现
+- 如果当前执行的是本地方法，当前线程的程序计数器为空（Undefined）
+
+#### 2.java虚拟机栈、本地方法栈（调用本地方法）
+
+![虚拟机栈](picture/虚拟机栈.png)
+
+![栈帧](picture/栈帧.jpg)
+
+- 描述的是java方法执行的内存模型，每个方法执行的同时会创建一个栈帧
+- 局部变量表：
+  - 基本数据类型 + 对象引用 + returnAddress类型（指向一个地址）
+  - 所需要的内存空间在编译时是完全确定的，方法运行时是不会改变局部变量表的大小。
+  - 只有long和double类型占两个局部变量空间，其他的数据类型都只占一个内存空间
+- 异常
+  - StackOverflowError: 栈溢出 ，线程请求栈的深度大于虚拟机所允许的深度
+  - OutOfMemoryError ：扩展时无法申请到足够的内存
+
+#### 3.java堆
+
+唯一的目的就是存储对象实例和数组
+
+是垃圾收集器的主要区域，因此被称为GC堆
+
+分代收集算法：更好地回收内存，更快的分配内存
+
+分为新生代，老年代:
+
+- 新生代：Eden,Survivor
+- 老年代：Old
+
+永久代（perm）在方法区中;
+
+线程私有的分配缓存区，TLAB:Thread Local Allocation Buffer
+
+-XX:SurvivorRatio=8 决定新生代中Eden区与一个Survivor区空间的比例为 8：1
+
+![堆](picture/堆.jpg)
+
+- Minor GC
+
+Minor GC指新生代GC，即发生在新生代（包括Eden区和Survivor区）的垃圾回收操作，当新生代无法为新生对象分配内存空间的时候，会触发Minor GC。因为新生代中大多数对象的生命周期都很短，所以发生Minor GC的频率很高，虽然它会触发stop-the-world，但是它的回收速度很快
+
+- Major GC
+
+ Major GC清理Tenured区，用于回收老年代，出现Major GC通常会出现至少一次Minor GC。 
+
+- Full GC
+
+Full GC是针对整个新生代、老生代、元空间（metaspace，java8以上版本取代perm gen）的全局范围的GC。Full GC不等于Major GC，也不等于Minor GC+Major GC，发生Full GC需要看使用了什么垃圾收集器组合，才能解释是什么样的垃圾回收。
+
+看看R大怎么说： https://www.zhihu.com/question/41922036/answer/93079526 
+
+#### 4.方法区（jdk8使用元空间代替）
+
+用于存储加载的类信息，常量，静态变量、即时编译器编译后的代码等数据
+
+可以称为永久代  但并不等价，只是把GC分代收集扩展到方法区，
+
+但只是对于HotSpot虚拟机而言，对其他如IBM J9等不存在永久带的概念
+
+-XX:PermSize=64M JVM初始分配的非堆内存
+
+-XX:MaxPermSize=128M JVM最大允许分配的非堆内存，按需分配
+
+现在官方也逐步放弃永久带改为Native Memory 来实现方法区，JDK 1.7已经把以前放在永久代的字符串常量池移出
+
+这个区域主要回收的目标是针对常量池的回收和对类型的卸载
+
+当方法区无法满足内存分配需求时，将会出现OutOfMemoryError 
+
+ https://www.cnblogs.com/paddix/p/5309550.html 
+
+#### 5.运行时常量池
+
