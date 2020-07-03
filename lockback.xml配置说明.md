@@ -17,7 +17,7 @@ logger可以用来根据某个包下或者某个类名指定输出特定的日�
 
 - name：用来指定受此logger约束的某一个包或者具体的某一个类
 - level：用来设置打印级别，五个常用打印级别从低至高依次为TRACE、DEBUG、INFO、WARN、ERROR，如果未设置此级别，那么当前logger会继承上级的级别
-- additivity：是否向上级logger传递打印信息，默认为true；一般设置为false，这样不会重复打日期
+- additivity：是否向上级logger传递打印信息，默认为true；一般设置为false，这样不会重复打印
 
 ### **root**
 
